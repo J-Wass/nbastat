@@ -1,37 +1,52 @@
+
+# coding: utf-8
+
+# In[1]:
+
+
 import numpy as np
-import matplotlib
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
-import sys
 import math
 from sklearn.cluster import KMeans
 
+
+# In[2]:
+
+
 adv_df = pd.read_csv('advanced_stats.csv')
-per_game_df = pd.read_csv('per_game_stats.csv').drop(columns=['Rk', 'Tm', 'Pos', 'G', 'MP'])
-dataframe = adv_df.merge(per_game_df, on = ['Player','Year'], how = 'outer')
+per_game_df = pd.read_csv('per_game_stats.csv')
+stripped_pg_df = per_game_df.drop(columns=['Rk', 'Tm', 'Pos', 'G', 'MP'])
+dataframe = adv_df.merge(stripped_pg_df, on = ['Player','Year'], how = 'outer')
 dataframe.to_csv('all_stats.csv', index=False)
 
-unlabelled_data = dataframe.drop(columns=['Player', 'Rk', 'Pos', 'Tm', 'Year'])
-kmeans = KMeans(n_clusters=5).fit(unlabelled_data.values)
+
+# In[3]:
+
 
 OWS_centers = []
 OWS_point_guards = []
 OWS_sforwards = []
 OWS_pforwards = []
-OWS_shooting_guards = []
 years = []
+
+OWS_shooting_guards = []
 
 DWS_centers = []
 DWS_pgs = []
 
-#load offensive win shares for each position
-year = 1950
-while year <= 2018:
-    centers = dataframe[(dataframe['Year'] == year) & (dataframe['Pos_x'] == 'C')]
-    point_guards = dataframe[(dataframe['Year'] == year) & (dataframe['Pos_x'] == 'PG')]
-    shooting_guards = dataframe[(dataframe['Year'] == year) & (dataframe['Pos_x'] == 'SG')]
-    small_forwards = dataframe[(dataframe['Year'] == year) & (dataframe['Pos_x'] == 'SF')]
-    power_forwards = dataframe[(dataframe['Year'] == year) & (dataframe['Pos_x'] == 'PF')]
+
+# In[4]:
+
+
+year = 1955
+while year <= 2016:
+    centers = dataframe[(dataframe['Year'] == year) & (dataframe['Pos'].str.contains('C'))]
+    point_guards = dataframe[(dataframe['Year'] == year) & (dataframe['Pos'].str.contains('PG'))]
+    shooting_guards = dataframe[(dataframe['Year'] == year) & (dataframe['Pos'].str.contains('SG'))]
+    small_forwards = dataframe[(dataframe['Year'] == year) & (dataframe['Pos'].str.contains('SF'))]
+    power_forwards = dataframe[(dataframe['Year'] == year) & (dataframe['Pos'].str.contains('PF'))]
 
     sample_size = 10
     rating = 'WS'
@@ -54,7 +69,7 @@ while year <= 2018:
     OWS_sforwards.append(small_forward_ave_OWS)
     OWS_pforwards.append(power_forward_ave_OWS)
 
-    sample_size = 10
+    sample_size = 15
     rating = 'PER'
     top_centers = centers.nlargest(sample_size, rating)
     top_pgs = point_guards.nlargest(sample_size, rating)
@@ -64,43 +79,76 @@ while year <= 2018:
     DWS_centers.append(center_ave_DWS)
     DWS_pgs.append(point_guard_ave_DWS)
     years.append(year)
-    year += 5
+    year += 1
 
 
-#plot each position
-plt.subplot(2, 1, 1)
-plt.plot(years, OWS_centers, label="Centers", linewidth=2)
-plt.plot(years, OWS_point_guards, label="Point Guards", linewidth=2)
-#plt.plot(years, OWS_shooting_guards, label="Shooting Guards", linewidth=2)
-#plt.plot(years, OWS_sforwards, label="Small Forwards", linewidth=2)
-#plt.plot(years, OWS_pforwards, label="Power Forwards", linewidth=2)
+# In[5]:
 
+plt.subplot(2,1,1)
+mpl.rcParams['figure.figsize'] = (20,10)
+plt.plot(years, OWS_centers, label="Centers", linewidth=3)
+plt.plot(years, OWS_point_guards, label="Point Guards", linewidth=3)
+plt.plot(years, OWS_shooting_guards, label="Shooting Guards", linewidth=3)
+plt.plot(years, OWS_sforwards, label="Small Forwards", linewidth=3)
+plt.plot(years, OWS_pforwards, label="Power Forwards", linewidth=3)
 
-#graph trendlines
-c = np.poly1d(np.polyfit(years, OWS_centers, 1))
-pg = np.poly1d(np.polyfit(years, OWS_point_guards, 1))
-sg = np.poly1d(np.polyfit(years, OWS_shooting_guards, 1))
-sf = np.poly1d(np.polyfit(years, OWS_sforwards, 1))
-pf = np.poly1d(np.polyfit(years, OWS_pforwards, 1))
-plt.plot(years,c(years),"b:")
-plt.plot(years,pg(years),"y:")
-#plt.plot(years,sg(years),"g:")
-#plt.plot(years,sf(years),"r:")
-#plt.plot(years,pf(years),"m:")
-
-#set up labels and legend
 plt.xlabel("NBA Season")
-plt.ylabel("Winshares among top performers")
+plt.ylabel("OWs among top performers")
 plt.legend(loc=2)
 
-#path graph DWS vs OWS
-plt.subplot(2, 1, 2)
-plt.scatter(DWS_centers, OWS_centers, label="Centers", linewidth=2)
-plt.scatter(DWS_pgs,OWS_point_guards, label="Point Guards", linewidth=2)
-c = np.poly1d(np.polyfit(DWS_centers, OWS_centers, 1))
-pg = np.poly1d(np.polyfit(DWS_pgs, OWS_point_guards, 1))
-plt.plot(DWS_centers, c(DWS_centers), 'b:')
-plt.plot(DWS_pgs, pg(DWS_pgs), 'y:')
+
+# In[6]:
+
+plt.subplot(2,1,2)
+plt.scatter(DWS_centers, OWS_centers, s=400, c=years, cmap="Blues", label="Centers")
+plt.scatter(DWS_pgs,OWS_point_guards, s=400,c=years, cmap="Oranges", label="Point Guards")
 plt.xlabel("Higher DWS →")
 plt.ylabel("Higher OWS →")
+plt.legend(loc=2)
 plt.show()
+
+
+# In[7]:
+
+
+np.set_printoptions(threshold=np.inf)
+target_2016 = dataframe[dataframe['Year'] == 2016]
+unlabelled_data = target_2016.drop(columns=['Player', 'Year','Rk', 'Tm', 'Pos', 'G', 'MP']).dropna(axis=1, how='any')
+
+#normalize here
+kmeans = KMeans(n_clusters=5).fit(unlabelled_data)
+print(list(unlabelled_data))
+labels = kmeans.predict(unlabelled_data)
+target_2016.insert(column = 'Prediction',value = labels, loc=0)
+
+centers = target_2016[target_2016['Pos'].str.contains('C')]
+pf = target_2016[target_2016['Pos'].str.contains('PF')]
+sf = target_2016[target_2016['Pos'].str.contains('SF')]
+sg = target_2016[target_2016['Pos'].str.contains('SG')]
+pg = target_2016[target_2016['Pos'].str.contains('PG')]
+
+print("centers: \n" , centers[['Prediction']].mode())
+print("pf: \n" , pf[['Prediction']].mode())
+print("sf: \n" , sf[['Prediction']].mode())
+print("sg: \n" , sg[['Prediction']].mode())
+print("pg: \n" , pg[['Prediction']].mode())
+
+
+# In[10]:
+
+
+from sklearn.neural_network import MLPClassifier
+
+#create and train classifier
+classifier = MLPClassifier(solver='lbfgs', hidden_layer_sizes=(15,10,5,3))
+dataset = per_game_df[per_game_df['Year'] == 2016].drop(columns=['Rk', 'Tm', 'G', 'MP','Year']).dropna(axis=1, how='any')
+labels = dataset['Pos']
+classifier.fit(dataset.drop(columns=['Pos','Player']), labels)
+
+#make predictions
+dataset['Prediction'] = ""
+for i, row in dataset.iterrows():
+    player = row.drop(['Prediction', 'Pos','Player'])
+    dataset.loc[i,'Prediction'] = classifier.predict([player])
+
+print(dataset.head(100))
