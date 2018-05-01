@@ -6,7 +6,7 @@ import os
 
 #run web driver headlessly
 os.environ['MOZ_HEADLESS'] = '1'
-binary = FirefoxBinary('/usr/bin/firefox')
+binary = FirefoxBinary('/usr/bin/firefox') 
 driver = webdriver.Firefox(firefox_binary=binary)
 advanced_csv = 'Rk,Player,Pos,Age,Tm,G,MP,PER,TS%,3PAr,FTr,ORB%,DRB%,TRB%,AST%,STL%,BLK%,TOV%,USG%,,OWS,DWS,WS,WS/48,,OBPM,DBPM,BPM,VORP,Year\n'
 per_game_csv = 'Rk,Player,Pos,Age▼,Tm,G,GS,MP,FG,FGA,FG%,3P,3PA,3P%,2P,2PA,2P%,eFG%,FT,FTA,FT%,ORB,DRB,TRB,AST,STL,BLK,TOV,PF,PS/G,Year\n'
